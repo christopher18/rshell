@@ -3,10 +3,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 void error(char *msg) {
     perror(msg);
-    exirt(0);
+    exit(0);
 }
 
 int main(int argc, char *argv[])
@@ -21,7 +24,7 @@ int main(int argc, char *argv[])
         exit(0);
     }
     portno = atoi(argv[2]);
-    sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
         error ("Error opening socket");
     }
@@ -31,13 +34,13 @@ int main(int argc, char *argv[])
         fprintf(stderr, "ERROR, no such host\n");
         exit(0);
     }
-    bzero((char *) $serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_UNIX;
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
     bcopy((char *)server->h_addr,
           (char *)&serv_addr.sin_addr.s_addr,
           server->h_length);
     serv_addr.sin_port = htons(portno);
-    if (connect(sockfd, &serv_addr, sizeof(serv_addr)) < 0)
+    if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
         error("ERROR connecting");
     bool running = true; // initial condition
     while (running) {
@@ -45,6 +48,9 @@ int main(int argc, char *argv[])
         printf("Please enter a command: ");
         bzero(buffer, 256); // clear out the buffer
         fgets(buffer, 255, stdin); // fill buffer with user input
+        // terminate loop if user enters exit
+        if (strncmp(buffer, "exit", 4) == 0)
+            running = false;
         n = write(sockfd, buffer, strlen(buffer)); // write to the socket
         // test for success
         if (n < 0) {
@@ -58,8 +64,7 @@ int main(int argc, char *argv[])
         }
         // print response from server code
         printf("%s\n", buffer);
-        if (strcmp(buffer, "exit"))
-            running = false;
+
     }
     return 0;
 }
