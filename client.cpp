@@ -58,6 +58,8 @@ int main(int argc, char *argv[])
         }
         // print response from server code
         printf("%s\n", buffer);
-        return 0;
+        if (strcmp(buffer, "exit"))
+            running = false;
     }
+    return 0;
 }
