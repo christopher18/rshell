@@ -43,14 +43,19 @@ int main(int argc, char *argv[])
     if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
         error("ERROR connecting");
     bool running = true; // initial condition
+    int totalNumCommands = 0;
     while (running) {
         // ask user for command
         printf("Please enter a command: ");
         bzero(buffer, 256); // clear out the buffer
         fgets(buffer, 255, stdin); // fill buffer with user input
         // terminate loop if user enters exit
-        if (strncmp(buffer, "exit", 4) == 0)
+        if (strncmp(buffer, "exit", 4) == 0) {
             running = false;
+            printf("Number of commands ran: %u\n", totalNumCommands);
+         }
+        else
+            totalNumCommands++;
         n = write(sockfd, buffer, strlen(buffer)); // write to the socket
         // test for success
         if (n < 0) {
