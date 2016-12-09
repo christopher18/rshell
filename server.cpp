@@ -18,33 +18,14 @@ void error(char *msg) {
     perror(msg);
     exit(1);
 }
-int execute (char **command)
+int execute (char **command, int newsockfd)
 {
+    // change file descriptor to print to client rather than std output
+    dup2(newsockfd, STDOUT_FILENO);
+    // change file descriptor to print to client rather than std err
+    dup2(newsockfd, STDERR_FILENO);
     int w;
     int status;
-    /*istringstream iss (str);
-    std::vector < string > command;
-    //Command string can contain the main command and a number of command line arguments.
-    do
-    {
-        string sub;
-        iss >> sub;
-        command.push_back (sub);
-    }
-    while (iss);
-    char **args = (char **) malloc (command.size () * sizeof (char *));
-    for (int i = 0; i < command.size (); i++)
-    {
-        args[i] = strdup (command[i].c_str ());
-    }
-    args[command.size () - 1] = 0;*/
-
-    // Please complete the code below to run the command with the specified arguments.
-    // The args array already contains the parsed command and the array.
-    // It should print "child exited successfully" if the process finished correctly
-    // Otherwise it should print "child Error"
-    // Quotes are for informational purpose only and does not need to appear in the final output.
-    // Ensure that you check for error during the fork step, the exec step and the wait step.
 
     // create a new identical child process
     w = fork();
@@ -54,17 +35,14 @@ int execute (char **command)
         printf("\nFork Failed\n");
         return -1;
     } else if (w == 0) {
+        // change file descriptor to print to client rather than std output
+        dup2(newsockfd, STDOUT_FILENO);
+        // change file descriptor to print to client rather than std err
+        dup2(newsockfd, STDERR_FILENO);
         // only the child should be in here
-        printf("Command: %s Length: %u\n", command[0], sizeof(command)/4);
-        printf("Command List:\n");
-        for (int i = 0; i < (sizeof(command)/4); i++) {
-            printf("%s\n", command[i]);
-        }
-        printf("done.\n");
         execvp(command[0], command);
         // execvp only returns if an error has occurred
-        printf("\nExec Failed\n");
-        exit(-1);
+        return -1;
     }
 
     // collects return values of functions to check whether execution failed.
@@ -84,9 +62,7 @@ int execute (char **command)
             // did process return normally?
         } else if (WIFEXITED(status)) {
             // did process exit successfully?
-            if (WEXITSTATUS(status) == 0) {
-                printf("\nChild exited successfully.\n");
-            } else {
+            if (WEXITSTATUS(status) != 0) {
                 printf("\nTerminated with exit code %u\n", WEXITSTATUS(status));
             }
             // did process return abnormally?
@@ -132,6 +108,9 @@ int main(int argc, char *argv[]) {
 
     // block until connection established
     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+
+
+
     if (newsockfd < 0)
         error("ERROR on accept");
 
@@ -140,28 +119,28 @@ int main(int argc, char *argv[]) {
         n = read(newsockfd, buffer, 255); // read bytes sent from client
         if (n < 0)
             error("ERROR reading from socket");
-        printf("Here is the message: %s\n", buffer);
-
-        //this gets the command
-        char *firstWord = strtok(buffer, " ");
+        // remove the newline symbol
+        buffer[strlen(buffer) - 1] = '\0';
         int numSpaces = 0;
-        //math to calculate the total number of words in the input
-        for (int i = 0; i < sizeof(buffer); i++) {
-            if (buffer[i] == ' ') {
+        for(int i = 0; i < strlen(buffer); i++) {
+            if(buffer[i] == ' ')
                 numSpaces++;
-            }
         }
+        // gets the command (the first word of the buffer)
+        char *str = strtok(buffer, " ");
+        // +2 -> one for words and one for null at the end
         int totalWords = numSpaces + 2;
-        printf("totalWords: %u\n", totalWords);
-        char **args = (char **) malloc(totalWords * sizeof(char *));
-        //args[0] is the command
-        args[0] = firstWord;
-        //everything after args[0] is arguments to the command
-        for (int i = 1; i < totalWords; i++) {
+        char* args[totalWords];
+              //  = (char**)malloc(totalWords * sizeof(char*));
+        args[0] = str;
+        // put the rest of the arguments in args
+        for(int i = 1; i < totalWords - 1; i++) {
             args[i] = strtok(NULL, " ");
         }
+        // set the last word in args to NULL for execvp
+        args[totalWords - 1] = NULL;
         // let's try executing the code
-         int retval = execute(args);
+         int retval = execute(args, newsockfd);
 
         if (retval < 0) {
             error("ERROR executing command");
@@ -172,10 +151,10 @@ int main(int argc, char *argv[]) {
             /*n = write(newsockfd, buffer, strlen(buffer)); // write to the socket
             if (n < 0)
                 error("ERROR writing to socket");*/
-            n = write(newsockfd, "I got your message", 18);
-            if (n < 0)
-                error("ERROR writing to socket");
-            free(args);
+            //n = write(newsockfd, "I got your message", 18);
+            /*if (n < 0)
+                error("ERROR writing to socket");*/
+           // free(args);
         }
         return 0;
     }

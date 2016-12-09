@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define BUFFSIZE 1000
 void error(char *msg) {
     perror(msg);
     exit(0);
@@ -18,7 +19,7 @@ int main(int argc, char *argv[])
     struct sockaddr_in serv_addr; // address of server
     struct hostent *server; // stores host information
 
-    char buffer[256];
+    char buffer[BUFFSIZE];
     if (argc < 3) {
         fprintf(stderr, "usage %s hostname port\n", argv[0]);
         exit(0);
@@ -47,12 +48,12 @@ int main(int argc, char *argv[])
     while (running) {
         // ask user for command
         printf("Please enter a command: ");
-        bzero(buffer, 256); // clear out the buffer
-        fgets(buffer, 255, stdin); // fill buffer with user input
+        bzero(buffer, BUFFSIZE); // clear out the buffer
+        fgets(buffer, BUFFSIZE - 1, stdin); // fill buffer with user input
         // terminate loop if user enters exit
         if (strncmp(buffer, "exit", 4) == 0) {
             running = false;
-            printf("Number of commands ran: %u\n", totalNumCommands);
+            printf("Number of commands run: %u\n", totalNumCommands);
          }
         else
             totalNumCommands++;
@@ -61,8 +62,8 @@ int main(int argc, char *argv[])
         if (n < 0) {
             error("ERROR writing to socket");
         }
-        bzero(buffer, 256); // re-clear the buffer
-        n = read(sockfd, buffer, 255); // read from socket
+        bzero(buffer, BUFFSIZE); // re-clear the buffer
+        n = read(sockfd, buffer, BUFFSIZE - 1); // read from socket
         // test for success
         if (n < 0) {
             error("ERROR writing to socket");
