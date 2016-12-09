@@ -43,18 +43,17 @@ int main(int argc, char *argv[])
     serv_addr.sin_port = htons(portno);
     if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
         error("ERROR connecting");
-    bool running = true; // initial condition
     int totalNumCommands = 0;
-    while (running) {
+    while (true) {
         // ask user for command
         printf("Please enter a command: ");
         bzero(buffer, BUFFSIZE); // clear out the buffer
         fgets(buffer, BUFFSIZE - 1, stdin); // fill buffer with user input
         // terminate loop if user enters exit
         if (strncmp(buffer, "exit", 4) == 0) {
-            running = false;
-            printf("Number of commands run: %u\n", totalNumCommands);
             break;
+         } else if (strncmp(buffer, "stats", 5) == 0) {
+           printf("Number of commands run: %u\n", totalNumCommands);
          }
         else
             totalNumCommands++;
