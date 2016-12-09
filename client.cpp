@@ -54,23 +54,26 @@ int main(int argc, char *argv[])
             break;
          } else if (strncmp(buffer, "stats", 5) == 0) {
            printf("Number of commands run: %u\n", totalNumCommands);
-         }
-        else
+         } else if (strncmp(buffer, "reset", 5) == 0) {
+            totalNumCommands = 0;
+        } else {
             totalNumCommands++;
+        }
+
         n = write(sockfd, buffer, strlen(buffer)); // write to the socket
+
         // test for success
         if (n < 0) {
             error("ERROR writing to socket");
         }
         bzero(buffer, BUFFSIZE); // re-clear the buffer
         n = read(sockfd, buffer, BUFFSIZE - 1); // read from socket
+
         // test for success
         if (n < 0) {
-            error("ERROR writing to socket");
+            error("ERROR reading socket");
         }
-        // print response from server code
         printf("%s\n", buffer);
-
     }
     return 0;
 }
