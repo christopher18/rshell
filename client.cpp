@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
         if (strncmp(buffer, "exit", 4) == 0) {
             running = false;
             printf("Number of commands run: %u\n", totalNumCommands);
+            break;
          }
         else
             totalNumCommands++;
