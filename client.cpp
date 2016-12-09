@@ -45,6 +45,7 @@ int main(int argc, char *argv[])
         error("ERROR connecting");
     int totalNumCommands = 0;
     while (true) {
+        start:
         // ask user for command
         printf("Please enter a command: ");
         bzero(buffer, BUFFSIZE); // clear out the buffer
@@ -54,8 +55,11 @@ int main(int argc, char *argv[])
             break;
          } else if (strncmp(buffer, "stats", 5) == 0) {
            printf("Number of commands run: %u\n", totalNumCommands);
+            bzero(buffer, BUFFSIZE);
+            strcpy(buffer, "free -m");
          } else if (strncmp(buffer, "reset", 5) == 0) {
             totalNumCommands = 0;
+            goto start;
         } else {
             totalNumCommands++;
         }

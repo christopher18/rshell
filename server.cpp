@@ -120,47 +120,33 @@ int main(int argc, char *argv[]) {
         n = read(newsockfd, buffer, 255); // read bytes sent from client
         if (n < 0)
             error("ERROR reading from socket");
-        if (strncmp(buffer, "stats", 5) == 0) {
-            int who = RUSAGE_CHILDREN;
-            struct rusage usage;
-            int ret = getrusage(who, &usage);
-            if (ret < 0) {
-                printf("Cannot determine usage statistics.\n");
-            }
-            //int secondTime = usage.ru_utime.tv_sec + usage.ru_stime.tv_sec;
-            //long milTime = usage.ru_utime.tv_usec + usage.ru_stime.tv_usec;
-            struct timeval utime = usage.ru_utime;
-            struct timeval stime = usage.ru_stime;
-            /*printf("RUSAGE :user time => %lld [sec] : %lld [usec], :system time => %lld [sec] : %lld [usec] ¥n",
-                   (int64_t)utime.tv_sec, (int64_t)utime.tv_usec,
-                   (int64_t)stime.tv_sec, (int64_t)stime.tv_usec);*/
-        } else {
-            // remove the newline symbol
-            buffer[strlen(buffer) - 1] = '\0';
-            int numSpaces = 0;
-            for(int i = 0; i < strlen(buffer); i++) {
-               if(buffer[i] == ' ')
-                   numSpaces++;
-            }
-            // gets the command (the first word of the buffer)
-            char *str = strtok(buffer, " ");
-            // +2 -> one for words and one for null at the end
-            int totalWords = numSpaces + 2;
-            char* args[totalWords];
-                  //  = (char**)malloc(totalWords * sizeof(char*));
-            args[0] = str;
-            // put the rest of the arguments in args
-            for(int i = 1; i < totalWords - 1; i++) {
-                args[i] = strtok(NULL, " ");
-            }
-            // set the last word in args to NULL for execvp
-            args[totalWords - 1] = NULL;
-            // let's try executing the code
-            int retval = execute(args, newsockfd);
 
-            if (retval < 0) {
-                error("ERROR executing command");
-            }
+        // remove the newline symbol
+        buffer[strlen(buffer) - 1] = '\0';
+        int numSpaces = 0;
+        for(int i = 0; i < strlen(buffer); i++) {
+            if(buffer[i] == ' ')
+                numSpaces++;
+        }
+        // gets the command (the first word of the buffer)
+        char *str = strtok(buffer, " ");
+        // +2 -> one for words and one for null at the end
+        int totalWords = numSpaces + 2;
+        char* args[totalWords];
+        //  = (char**)malloc(totalWords * sizeof(char*));
+        args[0] = str;
+        // put the rest of the arguments in args
+        for(int i = 1; i < totalWords - 1; i++) {
+            args[i] = strtok(NULL, " ");
+        }
+        // set the last word in args to NULL for execvp
+        args[totalWords - 1] = NULL;
+        // let's try executing the code
+        int retval = execute(args, newsockfd);
+
+        if (retval < 0) {
+            error("ERROR executing command");
+
         }
     }
     return 0;
