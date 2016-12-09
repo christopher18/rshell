@@ -45,6 +45,7 @@ int main(int argc, char *argv[])
         error("ERROR connecting");
     int totalNumCommands = 0;
     while (true) {
+        start:
         // ask user for command
         printf("Please enter a command: ");
         bzero(buffer, BUFFSIZE); // clear out the buffer
@@ -54,23 +55,29 @@ int main(int argc, char *argv[])
             break;
          } else if (strncmp(buffer, "stats", 5) == 0) {
            printf("Number of commands run: %u\n", totalNumCommands);
-         }
-        else
+            bzero(buffer, BUFFSIZE);
+            strcpy(buffer, "free -m");
+         } else if (strncmp(buffer, "reset", 5) == 0) {
+            totalNumCommands = 0;
+            goto start;
+        } else {
             totalNumCommands++;
+        }
+
         n = write(sockfd, buffer, strlen(buffer)); // write to the socket
+
         // test for success
         if (n < 0) {
             error("ERROR writing to socket");
         }
         bzero(buffer, BUFFSIZE); // re-clear the buffer
         n = read(sockfd, buffer, BUFFSIZE - 1); // read from socket
+
         // test for success
         if (n < 0) {
-            error("ERROR writing to socket");
+            error("ERROR reading socket");
         }
-        // print response from server code
         printf("%s\n", buffer);
-
     }
     return 0;
 }

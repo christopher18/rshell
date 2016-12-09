@@ -12,6 +12,7 @@
 #include <sstream>
 #include <errno.h>
 #include <sys/resource.h>
+#include <sys/time.h>
 
 using namespace std;
 
@@ -110,30 +111,16 @@ int main(int argc, char *argv[]) {
 
     // block until connection established
     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-    // change file descriptor to print to client rather than std output
-    dup2(newsockfd, STDOUT_FILENO);
-    // change file descriptor to print to client rather than std err
-    dup2(newsockfd, STDERR_FILENO);
+
     if (newsockfd < 0)
         error("ERROR on accept");
-    // come back here after we get a stats request
-    LOOP:
     // continually accept input
     while (true) {
         bzero(buffer, 256); // clear buffer
         n = read(newsockfd, buffer, 255); // read bytes sent from client
-
         if (n < 0)
             error("ERROR reading from socket");
-        if (strncmp(buffer, "stats", 5) == 0) {
-            int who = RUSAGE_CHILDREN;
-            struct rusage usage;
-            int ret = getrusage(who, &usage);
-            int secondTime = usage.ru_utime.tv_sec + usage.ru_stime.tv_sec;
-            int milTime = usage.ru_utime.tv_usec + usage.ru_stime.tv_usec;
-            printf("Total time is %s seconds and %s milliseconds.\n", secondTime, milTime);
-            goto LOOP;
-        }
+
         // remove the newline symbol
         buffer[strlen(buffer) - 1] = '\0';
         int numSpaces = 0;
@@ -146,7 +133,7 @@ int main(int argc, char *argv[]) {
         // +2 -> one for words and one for null at the end
         int totalWords = numSpaces + 2;
         char* args[totalWords];
-              //  = (char**)malloc(totalWords * sizeof(char*));
+        //  = (char**)malloc(totalWords * sizeof(char*));
         args[0] = str;
         // put the rest of the arguments in args
         for(int i = 1; i < totalWords - 1; i++) {
@@ -155,21 +142,12 @@ int main(int argc, char *argv[]) {
         // set the last word in args to NULL for execvp
         args[totalWords - 1] = NULL;
         // let's try executing the code
-         int retval = execute(args, newsockfd);
+        int retval = execute(args, newsockfd);
 
         if (retval < 0) {
             error("ERROR executing command");
+
         }
-            //bzero(buffer, 256);
-            // THIS IS WHERE WE RUN THE INPUT AND INSERT THE OUTPUT OF THAT
-            // INTO OUR BUFFER!!
-            /*n = write(newsockfd, buffer, strlen(buffer)); // write to the socket
-            if (n < 0)
-                error("ERROR writing to socket");*/
-            //n = write(newsockfd, "I got your message", 18);
-            /*if (n < 0)
-                error("ERROR writing to socket");*/
-           // free(args);
-        }
-        return 0;
     }
+    return 0;
+}
