@@ -16,5 +16,6 @@ When you are prompted to enter a command you have several options:
  - Enter "stats", which will print out how many commands have been entered and memory usage statistics.
  - Enter "reset", which will reset the command count to zero.
  - Enter "exit", which will exit the program.
- #Usage Example
+ 
+ ## Usage Example
  ![alt tag](https://github.com/christopher18/rshell/blob/master/example_input.png "Example Input")
